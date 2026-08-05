@@ -1,0 +1,18 @@
+{
+  "name": "Line Toolkit",
+  "short_name": "LTK",
+  "description": "Field networking companion for ISP techs — subnet math, an address registry, a patch/splice tracker, MAC vendor lookup, uplink diagnostics, and job checklists.",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#12151a",
+  "theme_color": "#000e7a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

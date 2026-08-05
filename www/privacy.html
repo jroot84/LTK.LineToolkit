@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Line Toolkit</title>
+<style>
+  body{font-family:-apple-system,system-ui,sans-serif; max-width:640px; margin:0 auto; padding:32px 20px 80px; line-height:1.6; color:#1a1f26; background:#eceee9;}
+  h1{font-size:22px; margin-bottom:4px;}
+  .updated{color:#5b6570; font-size:13px; margin-bottom:28px;}
+  h2{font-size:16px; margin-top:32px;}
+  p,li{font-size:14.5px;}
+  code{background:#e9ebe5; padding:2px 5px; border-radius:4px; font-size:13px;}
+  a{color:#000e7a;}
+</style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Line Toolkit (LTK) · Last updated August 2026</p>
+
+  <p>Line Toolkit is a personal field tool built to run entirely in your browser. This policy explains, plainly, what happens to your data.</p>
+
+  <h2>What's stored, and where</h2>
+  <p>Everything you enter — cabinet and panel records, port labels and notes, MAC vendor entries you save, IPDB registry entries, and job checklists with photos — is saved using your browser's local storage, on your device only. None of it is sent to any server operated by this app. There is no account, no sign-in, and no backend database.</p>
+  <p>Clearing your browser's site data, or uninstalling the app if installed as a PWA, deletes this data permanently. There is currently no cloud backup or sync.</p>
+
+  <h2>Requests this app makes to outside services</h2>
+  <p>A few tools in the app need to reach the open internet to work. When you use them, your device connects directly to these third parties — this app itself does not see or log that traffic:</p>
+  <ul>
+    <li><strong>MAC / OUI Lookup</strong> — runs entirely from a bundled local list plus anything you've saved yourself. No network request is made.</li>
+    <li><strong>Public IP / ASN lookup</strong> — when you tap "Check public IP" or look up an address, your device queries <a href="https://ipapi.co" target="_blank" rel="noopener">ipapi.co</a>, which will see the IP address being queried (including your own device's public IP, if you check your own connection). See their own privacy terms for how they handle that.</li>
+    <li><strong>Speed test</strong> — downloads and uploads test data directly to Cloudflare's public network-test endpoints (<code>speed.cloudflare.com</code>) to measure throughput. No test data is retained by this app.</li>
+    <li><strong>Location tagging</strong> — if you tag a cabinet or job location, your device's Geolocation API is used with your explicit tap, and the coordinates are saved only in your local storage, not transmitted anywhere by this app.</li>
+    <li><strong>Fonts</strong> — type is loaded from Google Fonts on first load, which involves a request to Google's font servers.</li>
+  </ul>
+
+  <h2>Analytics and tracking</h2>
+  <p>This app does not use analytics, ad tracking, or third-party trackers of any kind.</p>
+
+  <h2>Contact</h2>
+  <p>Line Toolkit is an independent personal project. Questions can be raised via the project's <a href="https://github.com/jroot84/LTK.LineToolkit" target="_blank" rel="noopener">GitHub repository</a>.</p>
+</body>
+</html>
