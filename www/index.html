@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12161c">
+<title>LineToolkit — Field Networking Toolkit</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%2312161c%22/><rect x=%2218%22 y=%2240%22 width=%2264%22 height=%2220%22 rx=%224%22 fill=%22none%22 stroke=%22%23f0a83c%22 stroke-width=%226%22/><circle cx=%2230%22 cy=%2250%22 r=%224%22 fill=%22%234fd67a%22/><circle cx=%2250%22 cy=%2250%22 r=%224%22 fill=%22%23f0a83c%22/><circle cx=%2270%22 cy=%2250%22 r=%224%22 fill=%22%23f0a83c%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --radius:10px;
+  --font-sans:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+html[data-theme="dark"]{
+  --bg:#12161c; --surface:#1b2129; --surface-2:#232a33; --surface-3:#2a3239;
+  --border:#2e3743; --text:#e8ecf1; --text-dim:#8fa0b0; --text-faint:#5c6a78;
+  --amber:#f0a83c; --amber-dim:#7a5a24; --green:#4fd67a; --green-dim:#1f4a30;
+  --red:#e2584f; --red-dim:#5a2c28; --shadow:0 8px 24px rgba(0,0,0,.35);
+}
+html[data-theme="light"]{
+  --bg:#eceee9; --surface:#ffffff; --surface-2:#f4f5f1; --surface-3:#e9ebe5;
+  --border:#d7d9d1; --text:#1a1f26; --text-dim:#5b6570; --text-faint:#8a9299;
+  --amber:#a5670a; --amber-dim:#f1dcb0; --green:#1f8a4c; --green-dim:#d3ecdc;
+  --red:#b93a31; --red-dim:#f4dad8; --shadow:0 6px 18px rgba(30,35,25,.08);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{margin:0; font-family:var(--font-sans); background:var(--bg); color:var(--text); transition:background .2s,color .2s;}
+input,select,textarea,button{font-family:inherit; color:inherit;}
+::selection{background:var(--amber); color:#12161c;}
+
+.app{max-width:640px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative;}
+header.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px 12px; position:sticky; top:0; z-index:20;
+  background:linear-gradient(var(--bg) 80%, transparent); backdrop-filter:blur(6px);
+}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand .mark{
+  width:30px; height:22px; border:2.5px solid var(--amber); border-radius:5px;
+  display:flex; align-items:center; justify-content:space-evenly; padding:0 3px;
+}
+.brand .mark i{width:4px; height:4px; border-radius:50%; background:var(--green); display:block;}
+.brand .mark i:nth-child(2),.brand .mark i:nth-child(3){background:var(--amber-dim);}
+.brand h1{font-size:17px; margin:0; letter-spacing:.2px; font-weight:600;}
+.brand small{display:block; font-size:10.5px; color:var(--text-dim); letter-spacing:.6px; text-transform:uppercase; margin-top:1px;}
+
+.theme-toggle{
+  width:52px; height:28px; border-radius:20px; background:var(--surface-2); border:1px solid var(--border);
+  position:relative; cursor:pointer; padding:0; flex-shrink:0;
+}
+.theme-toggle .knob{
+  position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%;
+  background:var(--amber); transition:transform .2s ease; display:flex; align-items:center; justify-content:center;
+  font-size:11px;
+}
+html[data-theme="light"] .theme-toggle .knob{transform:translateX(24px); background:var(--amber);}
+
+main{flex:1; padding:4px 16px 104px;}
+section.panel{display:none; animation:fade .18s ease;}
+section.panel.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+h2.panel-title{font-size:13px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-dim); margin:14px 0 10px; font-weight:600;}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow);}
+.card h3{margin:0 0 12px; font-size:14.5px; font-weight:600; display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.hint{font-size:12px; color:var(--text-dim); line-height:1.5; margin:2px 0 12px;}
+
+label.field{display:block; margin-bottom:12px;}
+label.field span{display:block; font-size:11.5px; color:var(--text-dim); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px;}
+input[type=text],input[type=number],select,textarea{
+  width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:7px;
+  padding:10px 11px; font-size:14.5px; font-family:var(--font-mono); color:var(--text);
+}
+textarea{font-family:var(--font-sans); resize:vertical; min-height:60px;}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--amber); outline-offset:1px;}
+
+.row{display:flex; gap:10px;}
+.row > *{flex:1;}
+.row.tight{gap:6px;}
+
+button.btn{
+  background:var(--amber); color:#16110a; border:none; border-radius:7px; padding:10px 14px;
+  font-size:13.5px; font-weight:600; cursor:pointer; letter-spacing:.2px;
+}
+button.btn:active{transform:scale(.98);}
+button.btn.ghost{background:transparent; color:var(--text); border:1px solid var(--border);}
+button.btn.danger{background:var(--red); color:#fff;}
+button.btn.sm{padding:7px 10px; font-size:12px;}
+button.btn:disabled{opacity:.5; cursor:default;}
+button.icon-btn{background:var(--surface-2); border:1px solid var(--border); border-radius:6px; width:32px; height:32px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-dim); flex-shrink:0;}
+
+.result-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+.stat{background:var(--surface-2); border:1px solid var(--border); border-radius:7px; padding:9px 10px;}
+.stat span{display:block; font-size:10px; text-transform:uppercase; color:var(--text-dim); letter-spacing:.5px; margin-bottom:3px;}
+.stat b{font-family:var(--font-mono); font-size:14px; word-break:break-all;}
+.stat.wide{grid-column:1/-1;}
+
+.badge{display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:20px; font-weight:600; letter-spacing:.3px; white-space:nowrap;}
+.badge.green{background:var(--green-dim); color:var(--green);}
+.badge.amber{background:var(--amber-dim); color:var(--amber);}
+.badge.red{background:var(--red-dim); color:var(--red);}
+
+.error-text{color:var(--red); font-size:12.5px; margin-top:6px; min-height:16px;}
+.warn-banner{background:var(--red-dim); color:var(--red); border-radius:7px; padding:9px 11px; font-size:12.5px; margin:8px 0; line-height:1.4;}
+
+/* segmented control */
+.seg{display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:3px; gap:3px; margin-bottom:14px;}
+.seg button{flex:1; background:none; border:none; padding:8px 4px; border-radius:6px; font-size:12px; font-weight:600; color:var(--text-dim); cursor:pointer;}
+.seg button.active{background:var(--amber); color:#16110a;}
+
+/* lists */
+.breadcrumb{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim); margin-bottom:12px; flex-wrap:wrap;}
+.breadcrumb b{color:var(--text); cursor:pointer;}
+.breadcrumb .sep{opacity:.5;}
+.list-item{
+  display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:var(--surface);
+  border:1px solid var(--border); border-radius:9px; margin-bottom:8px; cursor:pointer; gap:10px;
+}
+.list-item:active{background:var(--surface-2);}
+.list-item .meta{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+.port-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+.port{
+  aspect-ratio:1; border-radius:7px; border:1.5px solid var(--border); background:var(--surface-2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; position:relative;
+  font-family:var(--font-mono); font-size:12px; gap:1px; text-align:center; padding:2px;
+}
+.port .dot{width:6px; height:6px; border-radius:50%; position:absolute; top:6px; right:6px;}
+.port.free .dot{background:var(--text-faint);}
+.port.used .dot{background:var(--green);}
+.port.fault .dot{background:var(--red);}
+.port .sub{font-size:8px; color:var(--text-dim); max-width:95%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-sans);}
+.search-box{position:relative; margin-bottom:14px;}
+.search-box input{padding-left:34px;}
+.search-box .sicon{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:14px;}
+
+/* checklist */
+.checklist-item{display:flex; align-items:flex-start; gap:10px; padding:11px 0; border-bottom:1px solid var(--border);}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-item input[type=checkbox]{width:19px; height:19px; margin-top:1px; accent-color:var(--green); flex-shrink:0;}
+.checklist-item.done label{text-decoration:line-through; color:var(--text-faint);}
+.checklist-item label{font-size:14px; line-height:1.4; flex:1;}
+.photo-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px;}
+.photo-thumb{position:relative; border-radius:7px; overflow:hidden; aspect-ratio:1; border:1px solid var(--border);}
+.photo-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.photo-thumb .rm{position:absolute; top:3px; right:3px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer;}
+.add-photo-btn{aspect-ratio:1; border:1.5px dashed var(--border); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--text-dim); cursor:pointer; background:none;}
+
+.vendor-result{padding:14px; border-radius:9px; background:var(--surface-2); border:1px solid var(--border); margin-top:12px;}
+.vendor-result .vname{font-size:17px; font-weight:600;}
+.vendor-result .voui{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:2px;}
+.flag-row{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+
+table.ref-table{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px;}
+table.ref-table th,table.ref-table td{text-align:left; padding:7px 6px; border-bottom:1px solid var(--border);}
+table.ref-table th{color:var(--text-dim); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:.4px;}
+table.ref-table td:first-child{font-family:var(--font-mono);}
+
+.empty{text-align:center; padding:40px 16px; color:var(--text-dim);}
+.empty .glyph{font-size:30px; margin-bottom:8px; opacity:.6;}
+.empty p{font-size:13px; margin:4px 0 14px;}
+
+/* nav strip */
+nav.portstrip{
+  position:fixed; bottom:0; left:0; right:0; z-index:30;
+  display:flex; justify-content:center; padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, var(--bg) 60%, transparent);
+}
+.strip-inner{
+  display:flex; gap:3px; background:var(--surface); border:1px solid var(--border); border-radius:14px;
+  padding:7px 5px; box-shadow:var(--shadow); max-width:640px; width:100%;
+}
+.port-btn{
+  flex:1; background:none; border:none; border-radius:9px; padding:7px 2px 6px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-dim); position:relative;
+}
+.port-btn .led{width:6px; height:6px; border-radius:50%; background:var(--text-faint); transition:background .15s, box-shadow .15s;}
+.port-btn .lbl{font-size:9px; text-transform:uppercase; letter-spacing:.2px; font-weight:600;}
+.port-btn.active{background:var(--surface-2); color:var(--text);}
+.port-btn.active .led{background:var(--green); box-shadow:0 0 6px var(--green);}
+@media (prefers-reduced-motion: reduce){ section.panel{animation:none;} }
+
+#toast{
+  position:fixed; bottom:92px; left:50%; transform:translateX(-50%) translateY(10px); opacity:0; pointer-events:none;
+  background:var(--surface-3); border:1px solid var(--border); color:var(--text); padding:9px 16px; border-radius:20px;
+  font-size:12.5px; transition:opacity .15s, transform .15s; z-index:50; box-shadow:var(--shadow); white-space:nowrap;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* modal */
+#modalOverlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:flex-end; justify-content:center; z-index:100;}
+#modalOverlay.show{display:flex;}
+.modal-card{background:var(--surface); border-top:1px solid var(--border); border-radius:16px 16px 0 0; padding:18px; width:100%; max-width:640px; max-height:88vh; overflow-y:auto; box-shadow:var(--shadow);}
+.modal-card h3{margin-top:0;}
+.modal-grip{width:36px; height:4px; background:var(--border); border-radius:3px; margin:0 auto 14px;}
+
+/* speed test gauge */
+.gauge-row{display:flex; gap:8px; margin-top:12px;}
+.gauge{flex:1; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:12px 10px; text-align:center;}
+.gauge .val{font-family:var(--font-mono); font-size:20px; font-weight:600;}
+.gauge .lbl{font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;}
+.progress-track{height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden; margin-top:12px;}
+.progress-fill{height:100%; background:var(--amber); width:0%; transition:width .2s;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark"><i></i><i></i><i></i></div>
+      <div>
+        <h1>LineToolkit</h1>
+        <small>Field networking companion</small>
+      </div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark mode"><span class="knob">☾</span></button>
+  </header>
+
+  <main>
+
+    <!-- ===================== SUBNET CALC ===================== -->
+    <section class="panel active" id="panel-subnet">
+      <h2 class="panel-title">Subnet Calculator</h2>
+
+      <div class="card">
+        <h3>IPv4 / CIDR</h3>
+        <label class="field">
+          <span>IP address + prefix</span>
+          <input type="text" id="sc-input" placeholder="e.g. 10.20.4.130/26" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </label>
+        <div class="row">
+          <button class="btn" id="sc-calc">Calculate</button>
+          <button class="btn ghost" id="sc-binary">Toggle binary</button>
+        </div>
+        <div class="error-text" id="sc-error"></div>
+
+        <div id="sc-results" style="display:none">
+          <div class="result-grid">
+            <div class="stat"><span>Network</span><b id="r-network">–</b></div>
+            <div class="stat"><span>Broadcast</span><b id="r-broadcast">–</b></div>
+            <div class="stat"><span>First usable</span><b id="r-first">–</b></div>
+            <div class="stat"><span>Last usable</span><b id="r-last">–</b></div>
+            <div class="stat"><span>Usable hosts</span><b id="r-hosts">–</b></div>
+            <div class="stat"><span>Subnet mask</span><b id="r-mask">–</b></div>
+            <div class="stat wide"><span>Wildcard mask</span><b id="r-wildcard">–</b></div>
+            <div class="stat wide" id="r-binary-wrap" style="display:none"><span>Network (binary)</span><b id="r-binary" style="font-size:11.5px; line-height:1.6;">–</b></div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn ghost sm" id="sc-copy">Copy summary</button>
+            <button class="btn ghost sm" id="sc-to-ipdb">Save to IPDB</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Split the block above</h3>
+        <div class="seg">
+          <button class="active" data-mode="flsm" onclick="setSplitMode('flsm')">Equal split (FLSM)</button>
+          <button data-mode="vlsm" onclick="setSplitMode('vlsm')">By requirement (VLSM)</button>
+        </div>
+
+        <div id="flsm-view">
+          <p class="hint">Divide the network into equally sized child blocks.</p>
+          <div class="row">
+            <label class="field"><span>Split into</span>
+              <select id="vlsm-count">
+                <option value="2">2 subnets</option>
+                <option value="4">4 subnets</option>
+                <option value="8">8 subnets</option>
+                <option value="16">16 subnets</option>
+                <option value="32">32 subnets</option>
+                <option value="64">64 subnets</option>
+              </select>
+            </label>
+            <label class="field"><span>&nbsp;</span>
+              <button class="btn ghost" id="vlsm-split" style="width:100%">Split</button>
+            </label>
+          </div>
+          <div id="vlsm-out"></div>
+        </div>
+
+        <div id="vlsm-view" style="display:none">
+          <p class="hint">List what each segment of the network needs, largest first — LineToolkit packs the smallest prefix that fits each one, in order, from the base block.</p>
+          <div id="vreq-rows"></div>
+          <button class="btn ghost sm" onclick="addVreqRow()">+ Add requirement</button>
+          <button class="btn" style="width:100%; margin-top:10px" onclick="calcVlsm()">Allocate</button>
+          <div id="vlsm-req-out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== IPDB ===================== -->
+    <section class="panel" id="panel-ipdb">
+      <h2 class="panel-title">IPDB — Address Registry</h2>
+      <p class="hint">Track which subnet belongs to which part of your network — buildings, VLANs, sites, customer blocks. Saved on this device.</p>
+
+      <div class="search-box">
+        <span class="sicon">⌕</span>
+        <input type="text" id="ipdb-search" placeholder="Search by label, tag, or CIDR…">
+      </div>
+
+      <div id="ipdb-list"></div>
+
+      <div class="card">
+        <h3>Register a block</h3>
+        <label class="field"><span>CIDR</span><input type="text" id="ipdb-cidr" placeholder="10.0.0.0/25"></label>
+        <label class="field"><span>Label</span><input type="text" id="ipdb-label" placeholder="Building A — Office" style="font-family:var(--font-sans)"></label>
+        <label class="field"><span>Notes / tags</span><textarea id="ipdb-notes" placeholder="VLAN 20, wired desks, 3rd floor IDF…"></textarea></label>
+        <div id="ipdb-warn"></div>
+        <button class="btn" style="width:100%" onclick="addIpdbEntry()">Save to registry</button>
+      </div>
+
+      <button class="btn ghost sm" onclick="exportIpdb()">Export CSV</button>
+    </section>
+
+    <!-- ===================== PATCH TRACKER ===================== -->
+    <section class="panel" id="panel-tracker">
+      <h2 class="panel-title">Splice &amp; Patch Tracker</h2>
+
+      <div class="search-box">
+        <span class="sicon">⌕</span>
+        <input type="text" id="pt-search" placeholder="Search port label, customer ID, MAC…">
+      </div>
+
+      <div class="breadcrumb" id="pt-crumb"></div>
+      <div id="pt-body"></div>
+
+      <div class="row" style="margin-top:6px">
+        <button class="btn ghost sm" id="pt-export">Export CSV</button>
+      </div>
+    </section>
+
+    <!-- ===================== MAC / OUI LOOKUP ===================== -->
+    <section class="panel" id="panel-lookup">
+      <h2 class="panel-title">MAC / OUI Lookup</h2>
+
+      <div class="card">
+        <h3>Identify a vendor</h3>
+        <p class="hint">Also used automatically when you log a MAC against a port in the Patch Tracker.</p>
+        <label class="field">
+          <span>MAC address</span>
+          <input type="text" id="mac-input" placeholder="e.g. 00:1A:2B:3C:4D:5E" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </label>
+        <button class="btn" id="mac-lookup" style="width:100%">Look up</button>
+        <div id="mac-result"></div>
+      </div>
+
+      <div class="card">
+        <h3>Add a vendor</h3>
+        <p class="hint">Bundled list is a curated starter set, not the full IEEE registry. Add entries you look up often — they're saved on this device and checked first, everywhere in the app.</p>
+        <div class="row">
+          <label class="field"><span>OUI prefix</span><input type="text" id="mac-add-oui" placeholder="00:1A:2B"></label>
+          <label class="field"><span>Vendor name</span><input type="text" id="mac-add-name" placeholder="Acme Networks" style="font-family:var(--font-sans)"></label>
+        </div>
+        <button class="btn ghost sm" id="mac-add-btn">Save vendor</button>
+        <div id="mac-custom-list" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h3>Common ports &amp; protocols</h3>
+        <table class="ref-table" id="ports-table"></table>
+      </div>
+    </section>
+
+    <!-- ===================== NET (public IP / ASN / speed) ===================== -->
+    <section class="panel" id="panel-net">
+      <h2 class="panel-title">Net — Uplink Info</h2>
+
+      <div class="card">
+        <h3>This connection</h3>
+        <button class="btn" style="width:100%" id="net-self-btn">Check public IP &amp; ASN</button>
+        <div id="net-self-out"></div>
+      </div>
+
+      <div class="card">
+        <h3>Look up any IP</h3>
+        <div class="row">
+          <input type="text" id="net-ip-input" placeholder="e.g. 8.8.8.8">
+          <button class="btn ghost sm" id="net-ip-btn">Look up</button>
+        </div>
+        <div id="net-ip-out"></div>
+      </div>
+
+      <div class="card">
+        <h3>Speed test</h3>
+        <p class="hint">Runs against Cloudflare's public network-test endpoints. Needs real internet access — carrier-grade NAT, captive portals, or a locked-down firewall can block it. Good for a fast read, not a lab-grade certification measurement.</p>
+        <button class="btn" style="width:100%" id="speed-btn">Run speed test</button>
+        <div class="progress-track"><div class="progress-fill" id="speed-progress"></div></div>
+        <div id="speed-status" class="hint" style="margin:8px 0 0"></div>
+        <div class="gauge-row">
+          <div class="gauge"><div class="val" id="g-ping">–</div><div class="lbl">Ping ms</div></div>
+          <div class="gauge"><div class="val" id="g-down">–</div><div class="lbl">Down Mbps</div></div>
+          <div class="gauge"><div class="val" id="g-up">–</div><div class="lbl">Up Mbps</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== JOB CHECKLIST ===================== -->
+    <section class="panel" id="panel-jobs">
+      <h2 class="panel-title">Job Checklist</h2>
+      <div id="jobs-body"></div>
+    </section>
+
+  </main>
+
+  <nav class="portstrip">
+    <div class="strip-inner">
+      <button class="port-btn active" data-panel="subnet"><span class="led"></span><span class="lbl">Subnet</span></button>
+      <button class="port-btn" data-panel="ipdb"><span class="led"></span><span class="lbl">IPDB</span></button>
+      <button class="port-btn" data-panel="tracker"><span class="led"></span><span class="lbl">Patch</span></button>
+      <button class="port-btn" data-panel="lookup"><span class="led"></span><span class="lbl">MAC</span></button>
+      <button class="port-btn" data-panel="net"><span class="led"></span><span class="lbl">Net</span></button>
+      <button class="port-btn" data-panel="jobs"><span class="led"></span><span class="lbl">Jobs</span></button>
+    </div>
+  </nav>
+
+  <div id="toast"></div>
+
+  <div id="modalOverlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-card" id="modalCard"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   THEME
+============================================================ */
+const root = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+function setTheme(t){ root.setAttribute('data-theme', t); localStorage.setItem('lt_theme', t); themeToggle.querySelector('.knob').textContent = t==='dark' ? '☾' : '☀'; }
+setTheme(localStorage.getItem('lt_theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light':'dark'));
+themeToggle.onclick = () => setTheme(root.getAttribute('data-theme')==='dark' ? 'light':'dark');
+
+/* ============================================================
+   NAV
+============================================================ */
+document.querySelectorAll('.port-btn').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('.port-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.panel).classList.add('active');
+  };
+});
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function copyText(str){
+  navigator.clipboard?.writeText(str).then(()=>toast('Copied to clipboard')).catch(()=>toast('Could not copy'));
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* modal helper */
+function openModal(html){
+  document.getElementById('modalCard').innerHTML = '<div class="modal-grip"></div>' + html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+/* ============================================================
+   IP MATH HELPERS (shared by Subnet + IPDB)
+============================================================ */
+function ipToInt(ip){
+  const p = ip.split('.').map(Number);
+  if(p.length!==4 || p.some(o=>isNaN(o)||o<0||o>255)) return null;
+  return ((p[0]<<24)|(p[1]<<16)|(p[2]<<8)|p[3])>>>0;
+}
+function intToIp(n){ return [n>>>24 & 255, n>>16 & 255, n>>8 & 255, n & 255].join('.'); }
+function intToBin(n){ return intToIp(n).split('.').map(o=>(+o).toString(2).padStart(8,'0')).join('.'); }
+function parseCidr(str){
+  const m = str.trim().match(/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*\/\s*(\d{1,2})$/);
+  if(!m) return null;
+  const ip = ipToInt(m[1]); const prefix = +m[2];
+  if(ip===null || prefix<0 || prefix>32) return null;
+  const maskInt = prefix===0 ? 0 : (0xFFFFFFFF << (32-prefix)) >>> 0;
+  const network = (ip & maskInt) >>> 0;
+  const broadcast = (network | (~maskInt >>> 0)) >>> 0;
+  const hostBits = 32-prefix;
+  const usable = hostBits<=1 ? 0 : Math.pow(2,hostBits)-2;
+  return {ip,prefix,maskInt,network,broadcast,usable};
+}
+
+/* ============================================================
+   SUBNET CALCULATOR
+============================================================ */
+let lastCalc = null;
+document.getElementById('sc-calc').onclick = ()=>{
+  const raw = document.getElementById('sc-input').value.trim();
+  const err = document.getElementById('sc-error');
+  err.textContent = '';
+  const c = parseCidr(raw);
+  if(!c){ err.textContent = 'Enter an address like 10.20.4.130/26 (prefix 0–32).'; document.getElementById('sc-results').style.display='none'; return; }
+  lastCalc = c;
+  const usable = c.usable;
+  const first = usable ? c.network+1 : c.network;
+  const last = usable ? c.broadcast-1 : c.broadcast;
+  document.getElementById('r-network').textContent = intToIp(c.network)+' /'+c.prefix;
+  document.getElementById('r-broadcast').textContent = intToIp(c.broadcast);
+  document.getElementById('r-first').textContent = usable ? intToIp(first) : '—';
+  document.getElementById('r-last').textContent = usable ? intToIp(last) : '—';
+  document.getElementById('r-hosts').textContent = usable.toLocaleString();
+  document.getElementById('r-mask').textContent = intToIp(c.maskInt);
+  document.getElementById('r-wildcard').textContent = intToIp(~c.maskInt>>>0);
+  document.getElementById('r-binary').textContent = intToBin(c.network);
+  document.getElementById('sc-results').style.display = 'block';
+  document.getElementById('vlsm-out').innerHTML = '';
+  document.getElementById('vlsm-req-out').innerHTML = '';
+};
+document.getElementById('sc-binary').onclick = ()=>{
+  const w = document.getElementById('r-binary-wrap');
+  w.style.display = w.style.display==='none' ? 'block' : 'none';
+};
+document.getElementById('sc-copy').onclick = ()=>{
+  if(!lastCalc) return;
+  const s = `Network: ${intToIp(lastCalc.network)}/${lastCalc.prefix}
+Broadcast: ${intToIp(lastCalc.broadcast)}
+Mask: ${intToIp(lastCalc.maskInt)}
+First/Last usable: ${document.getElementById('r-first').textContent} – ${document.getElementById('r-last').textContent}
+Usable hosts: ${document.getElementById('r-hosts').textContent}`;
+  copyText(s);
+};
+document.getElementById('sc-to-ipdb').onclick = ()=>{
+  if(!lastCalc) return;
+  document.getElementById('ipdb-cidr').value = `${intToIp(lastCalc.network)}/${lastCalc.prefix}`;
+  document.querySelector('.port-btn[data-panel="ipdb"]').click();
+  toast('Add a label to finish saving it');
+};
+
+/* --- split mode toggle --- */
+function setSplitMode(mode){
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  document.getElementById('flsm-view').style.display = mode==='flsm' ? 'block' : 'none';
+  document.getElementById('vlsm-view').style.display = mode==='vlsm' ? 'block' : 'none';
+  if(mode==='vlsm' && document.getElementById('vreq-rows').children.length===0){ addVreqRow(); addVreqRow(); }
+}
+
+/* --- FLSM: equal split --- */
+document.getElementById('vlsm-split').onclick = ()=>{
+  if(!lastCalc){ toast('Calculate a network first'); return; }
+  const n = +document.getElementById('vlsm-count').value;
+  const addBits = Math.log2(n);
+  const newPrefix = lastCalc.prefix + addBits;
+  const out = document.getElementById('vlsm-out');
+  if(newPrefix>30){ out.innerHTML = '<p class="error-text">Too many splits for this block size.</p>'; return; }
+  const blockSize = Math.pow(2,32-newPrefix);
+  let html = '<div style="margin-top:10px">';
+  for(let i=0;i<n;i++){
+    const net = lastCalc.network + i*blockSize;
+    const bc = net + blockSize - 1;
+    html += `<div class="list-item" style="cursor:default"><div><b style="font-family:var(--font-mono)">${intToIp(net)}/${newPrefix}</b><div class="meta">${blockSize-2>0?blockSize-2:0} usable · up to ${intToIp(bc)}</div></div><button class="icon-btn" onclick="copyText('${intToIp(net)}/${newPrefix}')">⧉</button></div>`;
+  }
+  html += '</div>';
+  out.innerHTML = html;
+};
+
+/* --- VLSM: by host requirement --- */
+function addVreqRow(){
+  const wrap = document.getElementById('vreq-rows');
+  const row = document.createElement('div');
+  row.className = 'row tight';
+  row.style.marginBottom = '8px';
+  row.innerHTML = `<input type="text" placeholder="Name (e.g. Building A)" style="font-family:var(--font-sans)" class="vreq-name">
+    <input type="number" placeholder="Hosts needed" class="vreq-hosts" style="max-width:110px">
+    <button class="icon-btn" onclick="this.parentElement.remove()">✕</button>`;
+  wrap.appendChild(row);
+}
+function calcVlsm(){
+  if(!lastCalc){ toast('Calculate a base network first'); return; }
+  const rows = [...document.querySelectorAll('#vreq-rows .row')].map(r=>({
+    name: r.querySelector('.vreq-name').value.trim() || 'Unnamed',
+    hosts: +r.querySelector('.vreq-hosts').value || 0
+  })).filter(r=>r.hosts>0);
+  const out = document.getElementById('vlsm-req-out');
+  if(!rows.length){ out.innerHTML = '<p class="error-text">Add at least one requirement with a host count.</p>'; return; }
+  rows.sort((a,b)=>b.hosts-a.hosts);
+  let cursor = lastCalc.network;
+  const baseEnd = lastCalc.broadcast;
+  let overflow = false;
+  const results = rows.map(r=>{
+    let hostBits = 0;
+    while(Math.pow(2,hostBits)-2 < r.hosts) hostBits++;
+    const prefix = 32-hostBits;
+    const blockSize = Math.pow(2,hostBits);
+    const net = cursor;
+    const bc = net + blockSize - 1;
+    if(bc > baseEnd || prefix < lastCalc.prefix) overflow = true;
+    cursor = net + blockSize;
+    return {...r, prefix, net, bc, avail: blockSize-2};
+  });
+  let html = '';
+  if(overflow) html += `<div class="warn-banner">These requirements don't fit inside ${intToIp(lastCalc.network)}/${lastCalc.prefix}. Consider a larger base block or trimming host counts.</div>`;
+  html += results.map(r=>`
+    <div class="list-item" style="cursor:default">
+      <div>
+        <b>${r.name}</b>
+        <div class="meta">needs ${r.hosts} → <span style="font-family:var(--font-mono)">${intToIp(r.net)}/${r.prefix}</span> (${r.avail} usable)</div>
+      </div>
+      <button class="icon-btn" onclick="copyText('${intToIp(r.net)}/${r.prefix}')">⧉</button>
+    </div>`).join('');
+  out.innerHTML = html;
+}
+
+/* ============================================================
+   IPDB — private address registry
+============================================================ */
+let ipdb = JSON.parse(localStorage.getItem('lt_ipdb')||'[]');
+function ipdbSave(){ localStorage.setItem('lt_ipdb', JSON.stringify(ipdb)); }
+function rangesOverlap(aS,aE,bS,bE){ return aS<=bE && bS<=aE; }
+function ipdbOverlaps(entry){
+  return ipdb.filter(e=>e.id!==entry.id && rangesOverlap(entry.network,entry.broadcast,e.network,e.broadcast));
+}
+function addIpdbEntry(){
+  const cidrRaw = document.getElementById('ipdb-cidr').value.trim();
+  const label = document.getElementById('ipdb-label').value.trim();
+  const notes = document.getElementById('ipdb-notes').value.trim();
+  const warnEl = document.getElementById('ipdb-warn');
+  const c = parseCidr(cidrRaw);
+  if(!c){ warnEl.innerHTML = '<p class="error-text">Enter a valid CIDR, e.g. 10.0.0.0/25</p>'; return; }
+  if(!label){ warnEl.innerHTML = '<p class="error-text">Give this block a label.</p>'; return; }
+  const entry = {id:uid(), cidr:`${intToIp(c.network)}/${c.prefix}`, network:c.network, broadcast:c.broadcast, prefix:c.prefix, usable:c.usable, label, notes, created:Date.now()};
+  const overlaps = ipdbOverlaps(entry);
+  ipdb.push(entry); ipdbSave();
+  document.getElementById('ipdb-cidr').value=''; document.getElementById('ipdb-label').value=''; document.getElementById('ipdb-notes').value='';
+  warnEl.innerHTML = overlaps.length ? `<div class="warn-banner">Overlaps ${overlaps.map(o=>o.label).join(', ')} — that's fine for nested supernets, otherwise double-check.</div>` : '';
+  renderIpdb();
+  toast('Saved to registry');
+}
+function renderIpdb(filter){
+  const list = document.getElementById('ipdb-list');
+  const q = (filter||'').toLowerCase();
+  let items = [...ipdb].sort((a,b)=>a.network-b.network);
+  if(q) items = items.filter(e=>e.label.toLowerCase().includes(q)||e.notes.toLowerCase().includes(q)||e.cidr.includes(q));
+  if(!items.length){ list.innerHTML = `<div class="empty"><div class="glyph">📇</div><p>${q?'No matches.':'No blocks registered yet.'}</p></div>`; return; }
+  list.innerHTML = items.map(e=>{
+    const overlaps = ipdbOverlaps(e);
+    return `<div class="list-item" onclick="editIpdbEntry('${e.id}')">
+      <div>
+        <b style="font-family:var(--font-mono)">${e.cidr}</b> &nbsp;${e.label}
+        <div class="meta">${e.usable.toLocaleString()} usable${e.notes?' · '+e.notes:''}</div>
+      </div>
+      ${overlaps.length?'<span class="badge amber">overlap</span>':''}
+    </div>`;
+  }).join('');
+}
+function editIpdbEntry(id){
+  const e = ipdb.find(x=>x.id===id);
+  openModal(`
+    <h3>${e.cidr}</h3>
+    <label class="field"><span>Label</span><input type="text" id="m-label" value="${e.label}" style="font-family:var(--font-sans)"></label>
+    <label class="field"><span>Notes / tags</span><textarea id="m-notes">${e.notes}</textarea></label>
+    <div class="row">
+      <button class="btn" onclick="saveIpdbEdit('${id}')">Save</button>
+      <button class="btn danger" onclick="deleteIpdbEntry('${id}')">Delete</button>
+    </div>
+  `);
+}
+function saveIpdbEdit(id){
+  const e = ipdb.find(x=>x.id===id);
+  e.label = document.getElementById('m-label').value.trim() || e.label;
+  e.notes = document.getElementById('m-notes').value.trim();
+  ipdbSave(); closeModal(); renderIpdb(document.getElementById('ipdb-search').value);
+}
+function deleteIpdbEntry(id){
+  ipdb = ipdb.filter(x=>x.id!==id); ipdbSave(); closeModal(); renderIpdb(document.getElementById('ipdb-search').value);
+}
+document.getElementById('ipdb-search').oninput = e=>renderIpdb(e.target.value);
+function exportIpdb(){
+  let rows = [['CIDR','Label','Usable Hosts','Notes']];
+  ipdb.forEach(e=>rows.push([e.cidr,e.label,e.usable,e.notes]));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'linetoolkit-ipdb.csv'; a.click();
+  toast('CSV exported');
+}
+renderIpdb();
+
+/* ============================================================
+   MAC / OUI LOOKUP (shared engine)
+============================================================ */
+const OUI_DB = {
+"00000C":"Cisco Systems","001A2F":"Cisco Systems","0004E2":"Cisco Systems (older block)","0090BF":"Cisco Systems (older block)",
+"0050F2":"Microsoft","0003FF":"Microsoft",
+"000393":"Apple","F0DBE2":"Apple","D8BB2C":"Apple",
+"000C29":"VMware","001C14":"VMware",
+"B827EB":"Raspberry Pi Foundation","DCA632":"Raspberry Pi Foundation","E45F01":"Raspberry Pi Foundation",
+"24A43C":"Ubiquiti Networks","04180F":"Ubiquiti Networks","F09FC2":"Ubiquiti Networks","78453C":"Ubiquiti Networks",
+"C4AD34":"MikroTik","4C5E0C":"MikroTik","6C3B6B":"MikroTik","D4CA6D":"MikroTik",
+"E4C725":"TP-Link","F4F26D":"TP-Link","B04E26":"TP-Link","64664B":"TP-Link",
+"C874E7":"Netgear","A0040A":"Netgear","204E71":"Netgear",
+"0024A5":"Arris / CommScope","3CF873":"Arris / CommScope","6C7086":"Arris / CommScope",
+"00D0BA":"Adtran","001BEC":"Adtran","F42853":"Adtran",
+"E86D06":"Nokia (formerly Alcatel-Lucent)","0080D3":"Nokia (formerly Alcatel-Lucent)",
+"0018E7":"Calix","001374":"Calix","3831DA":"Calix",
+"9C97AF":"Aruba Networks (HPE)","24DEC6":"Aruba Networks (HPE)","94B40F":"Aruba Networks (HPE)","000B86":"Aruba Networks (HPE)",
+"F0921C":"Extreme Networks","00040D":"Extreme Networks",
+"E0D46E":"Juniper Networks","2C6BF5":"Juniper Networks","5C5EAB":"Juniper Networks",
+"AC220B":"Huawei Technologies","00E0FC":"Huawei Technologies","F8A45F":"Huawei Technologies",
+"00259C":"Motorola","0022F4":"Motorola Mobility","341A4C":"Motorola",
+"D85D4C":"Zyxel Communications","001349":"Zyxel Communications","5C0E8B":"Zyxel Communications",
+"00E0DB":"DrayTek",
+"001125":"Dell","D4BED9":"Dell","F04DA2":"Dell",
+"000FB0":"Hewlett Packard","3C4A92":"HP Inc.",
+"3C15C2":"Intel Corporation","001B21":"Intel Corporation","A434D9":"Intel Corporation",
+"5CF9DD":"Broadcom","0010DB":"Broadcom",
+"18B430":"Espressif Systems","A020A6":"Espressif Systems","CC50E3":"Espressif Systems",
+"B4E62D":"Sonos","5CAAFD":"Sonos","000E58":"Sonos",
+"3417EB":"Samsung Electronics","8C7967":"Samsung Electronics","1CAF05":"Samsung Electronics",
+"F4F5D8":"Google","3C5AB4":"Google",
+"54609F":"Amazon Technologies","F0272D":"Amazon Technologies",
+"B0F1EC":"Sagemcom","6440F3":"Sagemcom",
+"E8FCAF":"Technicolor","0026B8":"Technicolor",
+"000730":"3Com"
+};
+function normalizeMac(str){
+  const hex = (str||'').replace(/[^0-9a-fA-F]/g,'').toUpperCase();
+  if(hex.length<6) return null;
+  return hex;
+}
+function ouiCustom(){ return JSON.parse(localStorage.getItem('lt_oui_custom')||'{}'); }
+function ouiLookup(hex6){
+  const custom = ouiCustom();
+  if(custom[hex6]) return {vendor:custom[hex6], source:'custom'};
+  if(OUI_DB[hex6]) return {vendor:OUI_DB[hex6], source:'bundled'};
+  return null;
+}
+function macResultHtml(hex){
+  const oui = hex.slice(0,6);
+  const firstByte = parseInt(hex.slice(0,2),16);
+  const isMulticast = (firstByte & 1) === 1;
+  const isLocal = (firstByte & 2) === 2;
+  const match = ouiLookup(oui);
+  const formatted = hex.match(/.{1,2}/g).join(':');
+  let flags = '';
+  if(isMulticast) flags += '<span class="badge amber">Multicast</span>';
+  if(isLocal) flags += '<span class="badge amber">Locally administered</span>';
+  return {formatted, vendor: match?match.vendor:'Vendor not in local database', flagsHtml: flags?`<div class="flag-row">${flags}</div>`:'', source: match?match.source:null};
+}
+document.getElementById('mac-lookup').onclick = ()=>{
+  const hex = normalizeMac(document.getElementById('mac-input').value);
+  const out = document.getElementById('mac-result');
+  if(!hex){ out.innerHTML = '<p class="error-text">Enter a valid MAC address.</p>'; return; }
+  const r = macResultHtml(hex);
+  out.innerHTML = `<div class="vendor-result"><div class="vname">${r.vendor}</div><div class="voui">${r.formatted}${r.source==='custom'?' · from your saved list':''}</div>${r.flagsHtml}</div>`;
+};
+document.getElementById('mac-add-btn').onclick = ()=>{
+  const oui = normalizeMac(document.getElementById('mac-add-oui').value);
+  const name = document.getElementById('mac-add-name').value.trim();
+  if(!oui || oui.length<6 || !name){ toast('Enter both OUI and vendor name'); return; }
+  const custom = ouiCustom();
+  custom[oui.slice(0,6)] = name;
+  localStorage.setItem('lt_oui_custom', JSON.stringify(custom));
+  document.getElementById('mac-add-oui').value=''; document.getElementById('mac-add-name').value='';
+  renderCustomOui(); toast('Vendor saved');
+};
+function renderCustomOui(){
+  const custom = ouiCustom();
+  const keys = Object.keys(custom);
+  const el = document.getElementById('mac-custom-list');
+  if(!keys.length){ el.innerHTML=''; return; }
+  el.innerHTML = keys.map(k=>`<div class="list-item" style="cursor:default"><div><b style="font-family:var(--font-mono)">${k.match(/.{1,2}/g).join(':')}</b><div class="meta">${custom[k]}</div></div><button class="icon-btn" onclick="delCustomOui('${k}')">✕</button></div>`).join('');
+}
+function delCustomOui(k){ const c=ouiCustom(); delete c[k]; localStorage.setItem('lt_oui_custom',JSON.stringify(c)); renderCustomOui(); }
+renderCustomOui();
+
+const PORTS_REF = [
+  ['67/68/udp','DHCP'],['53/udp+tcp','DNS'],['123/udp','NTP'],
+  ['161/162/udp','SNMP / traps'],['1701/udp','L2TP'],['1723/tcp','PPTP'],
+  ['500/4500/udp','IPsec IKE / NAT-T'],['1812/1813/udp','RADIUS auth/acct'],
+  ['514/udp','Syslog'],['69/udp','TFTP'],['22/tcp','SSH'],['23/tcp','Telnet'],
+  ['80/443/tcp','HTTP / HTTPS'],['547/udp','DHCPv6'],['3784/udp','BFD'],
+  ['646/tcp+udp','LDP (MPLS)'],['179/tcp','BGP']
+];
+document.getElementById('ports-table').innerHTML = '<tr><th>Port</th><th>Protocol</th></tr>' +
+  PORTS_REF.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+
+/* ============================================================
+   PATCH / SPLICE TRACKER  (ports now carry MAC + vendor)
+============================================================ */
+let ptData = JSON.parse(localStorage.getItem('lt_patch_data') || '{"cabinets":[]}');
+let ptView = {cabinetId:null, panelId:null};
+function ptSave(){ localStorage.setItem('lt_patch_data', JSON.stringify(ptData)); }
+
+function ptRenderCrumb(){
+  const crumb = document.getElementById('pt-crumb');
+  const cab = ptData.cabinets.find(c=>c.id===ptView.cabinetId);
+  const pnl = cab?.panels.find(p=>p.id===ptView.panelId);
+  let html = `<b onclick="ptView={cabinetId:null,panelId:null};ptRender()">All cabinets</b>`;
+  if(cab){ html += `<span class="sep">›</span><b onclick="ptView.panelId=null;ptRender()">${cab.name}</b>`; }
+  if(pnl){ html += `<span class="sep">›</span><span>${pnl.name}</span>`; }
+  crumb.innerHTML = html;
+}
+function ptRender(){
+  ptRenderCrumb();
+  const body = document.getElementById('pt-body');
+  if(!ptView.cabinetId){
+    body.innerHTML = ptData.cabinets.length===0
+      ? `<div class="empty"><div class="glyph">⌸</div><p>No cabinets logged yet.<br>Add your first one to start tracking panels and ports.</p></div>`
+      : ptData.cabinets.map(c=>`
+        <div class="list-item" onclick="ptView.cabinetId='${c.id}';ptRender()">
+          <div><b>${c.name}</b><div class="meta">${c.panels.length} panel${c.panels.length!==1?'s':''}${c.location?' · 📍 tagged':''}</div></div>
+          <span>›</span>
+        </div>`).join('');
+    body.innerHTML += `
+      <div class="card" style="margin-top:6px">
+        <h3>New cabinet</h3>
+        <div class="row"><input type="text" id="pt-new-cab" placeholder="Cabinet name / ID" style="font-family:var(--font-sans)"><button class="btn sm" onclick="ptAddCabinet()">Add</button></div>
+      </div>`;
+    return;
+  }
+  const cab = ptData.cabinets.find(c=>c.id===ptView.cabinetId);
+  if(!ptView.panelId){
+    body.innerHTML = (cab.panels.length===0 ? `<div class="empty"><div class="glyph">▤</div><p>No panels in this cabinet yet.</p></div>` :
+      cab.panels.map(p=>`
+        <div class="list-item" onclick="ptView.panelId='${p.id}';ptRender()">
+          <div><b>${p.name}</b><div class="meta">${p.ports.length} ports · ${p.ports.filter(x=>x.status==='used').length} in use</div></div>
+          <span>›</span>
+        </div>`).join(''));
+    body.innerHTML += `
+      <div class="card" style="margin-top:6px">
+        <h3>New panel</h3>
+        <div class="row">
+          <input type="text" id="pt-new-panel" placeholder="Panel name" style="font-family:var(--font-sans)">
+          <input type="number" id="pt-new-portcount" placeholder="# ports" value="12" style="max-width:90px">
+        </div>
+        <button class="btn sm" style="margin-top:8px" onclick="ptAddPanel()">Add panel</button>
+      </div>
+      <div class="card">
+        <h3>Location tag</h3>
+        <p class="hint">${cab.location ? `Tagged at ${cab.location.lat.toFixed(5)}, ${cab.location.lng.toFixed(5)}` : 'No location saved for this cabinet.'}</p>
+        <button class="btn ghost sm" onclick="ptTagLocation()">${cab.location?'Update':'Tag current'} location</button>
+        ${cab.location ? `<button class="btn ghost sm" onclick="window.open('https://maps.google.com/?q=${cab.location.lat},${cab.location.lng}','_blank')">Open in Maps</button>` : ''}
+      </div>`;
+    return;
+  }
+  const pnl = cab.panels.find(p=>p.id===ptView.panelId);
+  body.innerHTML = `<div class="port-grid">` + pnl.ports.map((p,i)=>`
+    <div class="port ${p.status}" onclick="ptEditPort('${cab.id}','${pnl.id}',${i})">
+      <span class="dot"></span>
+      <div>${p.num}</div>
+      ${p.label?`<div class="sub">${p.label}</div>`:''}
+      ${p.vendor?`<div class="sub">${p.vendor}</div>`:''}
+    </div>`).join('') + `</div>`;
+}
+function ptAddCabinet(){
+  const v = document.getElementById('pt-new-cab').value.trim();
+  if(!v) return;
+  ptData.cabinets.push({id:uid(), name:v, location:null, panels:[]});
+  ptSave(); ptRender(); toast('Cabinet added');
+}
+function ptAddPanel(){
+  const cab = ptData.cabinets.find(c=>c.id===ptView.cabinetId);
+  const name = document.getElementById('pt-new-panel').value.trim();
+  const count = +document.getElementById('pt-new-portcount').value || 12;
+  if(!name) return;
+  const ports = Array.from({length:count},(_,i)=>({num:i+1,status:'free',label:'',mac:'',vendor:'',notes:''}));
+  cab.panels.push({id:uid(), name, ports});
+  ptSave(); ptRender(); toast('Panel added');
+}
+function ptTagLocation(){
+  if(!navigator.geolocation){ toast('Geolocation not available'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const cab = ptData.cabinets.find(c=>c.id===ptView.cabinetId);
+    cab.location = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+    ptSave(); ptRender(); toast('Location tagged');
+  }, ()=>toast('Could not get location'));
+}
+function ptEditPort(cabId,panelId,idx){
+  const cab = ptData.cabinets.find(c=>c.id===cabId);
+  const pnl = cab.panels.find(p=>p.id===panelId);
+  const port = pnl.ports[idx];
+  openModal(`
+    <h3>Port ${port.num}</h3>
+    <label class="field"><span>Status</span>
+      <select id="m-status">
+        <option value="free" ${port.status==='free'?'selected':''}>Free</option>
+        <option value="used" ${port.status==='used'?'selected':''}>Used</option>
+        <option value="fault" ${port.status==='fault'?'selected':''}>Fault</option>
+      </select>
+    </label>
+    <label class="field"><span>Label / customer ID / strand</span><input type="text" id="m-label" value="${port.label||''}" style="font-family:var(--font-sans)"></label>
+    <label class="field"><span>MAC address of connected device</span>
+      <div class="row tight">
+        <input type="text" id="m-mac" value="${port.mac||''}" placeholder="00:1A:2B:3C:4D:5E">
+        <button class="icon-btn" onclick="ptLookupMacInModal()">⌕</button>
+      </div>
+    </label>
+    <div id="m-mac-result">${port.vendor?`<div class="vendor-result"><div class="vname">${port.vendor}</div></div>`:''}</div>
+    <label class="field" style="margin-top:12px"><span>Notes</span><textarea id="m-notes">${port.notes||''}</textarea></label>
+    <div class="row">
+      <button class="btn" onclick="ptSavePort('${cabId}','${panelId}',${idx})">Save</button>
+      <button class="btn danger" onclick="ptClearPort('${cabId}','${panelId}',${idx})">Clear port</button>
+    </div>
+  `);
+}
+function ptLookupMacInModal(){
+  const hex = normalizeMac(document.getElementById('m-mac').value);
+  const out = document.getElementById('m-mac-result');
+  if(!hex){ out.innerHTML = '<p class="error-text">Enter a valid MAC.</p>'; return; }
+  const r = macResultHtml(hex);
+  out.innerHTML = `<div class="vendor-result"><div class="vname">${r.vendor}</div><div class="voui">${r.formatted}</div>${r.flagsHtml}</div>`;
+}
+function ptSavePort(cabId,panelId,idx){
+  const cab = ptData.cabinets.find(c=>c.id===cabId);
+  const pnl = cab.panels.find(p=>p.id===panelId);
+  const port = pnl.ports[idx];
+  port.status = document.getElementById('m-status').value;
+  port.label = document.getElementById('m-label').value.trim();
+  port.notes = document.getElementById('m-notes').value.trim();
+  const hex = normalizeMac(document.getElementById('m-mac').value);
+  if(hex){
+    port.mac = hex.match(/.{1,2}/g).join(':');
+    const match = ouiLookup(hex.slice(0,6));
+    port.vendor = match ? match.vendor : '';
+  } else { port.mac=''; port.vendor=''; }
+  ptSave(); closeModal(); ptRender();
+}
+function ptClearPort(cabId,panelId,idx){
+  const cab = ptData.cabinets.find(c=>c.id===cabId);
+  const pnl = cab.panels.find(p=>p.id===panelId);
+  pnl.ports[idx] = {num:pnl.ports[idx].num, status:'free', label:'', mac:'', vendor:'', notes:''};
+  ptSave(); closeModal(); ptRender();
+}
+document.getElementById('pt-search').oninput = (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  if(!q){ ptRender(); return; }
+  const hits = [];
+  ptData.cabinets.forEach(c=>c.panels.forEach(p=>p.ports.forEach((port,i)=>{
+    if(port.label.toLowerCase().includes(q) || String(port.num).includes(q) || (port.mac||'').toLowerCase().includes(q)){
+      hits.push({c,p,port,i});
+    }
+  })));
+  const body = document.getElementById('pt-body');
+  document.getElementById('pt-crumb').innerHTML = `<b onclick="document.getElementById('pt-search').value='';ptRender()">All cabinets</b><span class="sep">›</span><span>Search: "${q}"</span>`;
+  body.innerHTML = hits.length ? hits.map(h=>`
+    <div class="list-item" onclick="ptView={cabinetId:'${h.c.id}',panelId:'${h.p.id}'};document.getElementById('pt-search').value='';ptRender()">
+      <div><b>Port ${h.port.num} — ${h.port.label||'(unlabeled)'}</b><div class="meta">${h.c.name} / ${h.p.name} · ${h.port.status}${h.port.vendor?' · '+h.port.vendor:''}</div></div>
+      <span>›</span>
+    </div>`).join('') : `<div class="empty"><p>No ports match "${q}"</p></div>`;
+};
+document.getElementById('pt-export').onclick = ()=>{
+  let rows = [['Cabinet','Panel','Port','Status','Label/Notes','MAC','Vendor']];
+  ptData.cabinets.forEach(c=>c.panels.forEach(p=>p.ports.forEach(port=>{
+    rows.push([c.name,p.name,port.num,port.status,port.label,port.mac||'',port.vendor||'']);
+  })));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'linetoolkit-patch-export.csv'; a.click();
+  toast('CSV exported');
+};
+ptRender();
+
+/* ============================================================
+   NET — public IP / ASN lookup + speed test
+============================================================ */
+async function fetchIpInfo(target){
+  const url = target ? `https://ipapi.co/${target}/json/` : `https://ipapi.co/json/`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('lookup failed');
+  const d = await res.json();
+  if(d.error) throw new Error(d.reason || 'lookup failed');
+  return d;
+}
+function ipInfoHtml(d){
+  return `<div class="vendor-result">
+    <div class="vname">${d.ip}</div>
+    <div class="voui">${d.org || d.asn || 'Unknown org'}${d.asn?' · '+d.asn:''}</div>
+    <div class="flag-row">
+      ${d.city?`<span class="badge amber">${d.city}, ${d.region_code||d.region||''}</span>`:''}
+      ${d.country_name?`<span class="badge amber">${d.country_name}</span>`:''}
+    </div>
+  </div>`;
+}
+document.getElementById('net-self-btn').onclick = async ()=>{
+  const out = document.getElementById('net-self-out');
+  out.innerHTML = '<p class="hint">Checking…</p>';
+  try{ out.innerHTML = ipInfoHtml(await fetchIpInfo()); }
+  catch(e){ out.innerHTML = '<p class="error-text">Could not reach lookup service — check connectivity.</p>'; }
+};
+document.getElementById('net-ip-btn').onclick = async ()=>{
+  const ip = document.getElementById('net-ip-input').value.trim();
+  const out = document.getElementById('net-ip-out');
+  if(!ipToInt(ip)){ out.innerHTML = '<p class="error-text">Enter a valid IPv4 address.</p>'; return; }
+  out.innerHTML = '<p class="hint">Checking…</p>';
+  try{ out.innerHTML = ipInfoHtml(await fetchIpInfo(ip)); }
+  catch(e){ out.innerHTML = '<p class="error-text">Could not look that up — check connectivity or try again.</p>'; }
+};
+
+function setGauge(id,val){ document.getElementById(id).textContent = val; }
+function setProgress(pct){ document.getElementById('speed-progress').style.width = pct+'%'; }
+function setSpeedStatus(msg){ document.getElementById('speed-status').textContent = msg; }
+
+document.getElementById('speed-btn').onclick = async ()=>{
+  const btn = document.getElementById('speed-btn');
+  btn.disabled = true;
+  setGauge('g-ping','–'); setGauge('g-down','–'); setGauge('g-up','–'); setProgress(0);
+  try{
+    setSpeedStatus('Measuring latency…');
+    const pings = [];
+    for(let i=0;i<5;i++){
+      const t0 = performance.now();
+      await fetch('https://speed.cloudflare.com/__down?bytes=0', {cache:'no-store'});
+      pings.push(performance.now()-t0);
+    }
+    const usable = pings.slice(1);
+    const avgPing = usable.reduce((a,b)=>a+b,0)/usable.length;
+    setGauge('g-ping', avgPing.toFixed(0));
+    setProgress(20);
+
+    setSpeedStatus('Testing download…');
+    const downBytes = 15*1024*1024;
+    const t0 = performance.now();
+    const res = await fetch(`https://speed.cloudflare.com/__down?bytes=${downBytes}`, {cache:'no-store'});
+    const blob = await res.blob();
+    const downTime = (performance.now()-t0)/1000;
+    const downMbps = (blob.size*8/downTime)/1e6;
+    setGauge('g-down', downMbps.toFixed(1));
+    setProgress(60);
+
+    setSpeedStatus('Testing upload…');
+    const upBytes = 5*1024*1024;
+    const upBlob = new Blob([new Uint8Array(upBytes)]);
+    const t1 = performance.now();
+    await fetch('https://speed.cloudflare.com/__up', {method:'POST', body:upBlob});
+    const upTime = (performance.now()-t1)/1000;
+    const upMbps = (upBytes*8/upTime)/1e6;
+    setGauge('g-up', upMbps.toFixed(1));
+    setProgress(100);
+    setSpeedStatus('Done.');
+  }catch(e){
+    setSpeedStatus('Test failed — connection may be blocking the endpoint.');
+  }
+  btn.disabled = false;
+};
+
+/* ============================================================
+   JOB CHECKLIST
+============================================================ */
+const TEMPLATES = {
+  install: ['Verify work order & customer contact','Confirm serviceable drop / ONT location','Run and terminate drop cable','Test signal levels (upstream/downstream)','Activate service in provisioning system','Verify speed test on customer device','Walk customer through equipment','Photograph completed install'],
+  outage: ['Confirm reported symptoms with customer','Check upstream node / OLT status','Test signal at tap / demarc','Inspect drop for physical damage','Power-cycle CPE','Verify restoration with customer','Log root cause'],
+  upgrade: ['Confirm new service tier / equipment','Swap or reconfigure CPE','Re-run signal level test','Confirm speeds match new tier','Update account provisioning notes','Photograph new setup']
+};
+let jobs = JSON.parse(localStorage.getItem('lt_jobs')||'[]');
+let activeJobId = null;
+function jobsSave(){ localStorage.setItem('lt_jobs', JSON.stringify(jobs)); }
+function jobsRender(){
+  const body = document.getElementById('jobs-body');
+  if(activeJobId){ renderJobDetail(); return; }
+  body.innerHTML = `
+    <div class="card">
+      <h3>Start a job</h3>
+      <div class="row">
+        <select id="job-template">
+          <option value="install">Install</option>
+          <option value="outage">Outage / repair</option>
+          <option value="upgrade">Upgrade / maintenance</option>
+        </select>
+        <button class="btn sm" onclick="startJob()">Start</button>
+      </div>
+      <label class="field" style="margin-top:10px"><span>Job title / address</span><input type="text" id="job-title" placeholder="123 Main St" style="font-family:var(--font-sans)"></label>
+    </div>` +
+    (jobs.length ? jobs.slice().reverse().map(j=>`
+      <div class="list-item" onclick="activeJobId='${j.id}';jobsRender()">
+        <div><b>${j.title||'(untitled job)'}</b><div class="meta">${j.type} · ${j.items.filter(i=>i.done).length}/${j.items.length} done · ${new Date(j.created).toLocaleDateString()}</div></div>
+        <span class="badge ${j.items.every(i=>i.done)?'green':'amber'}">${j.items.every(i=>i.done)?'Complete':'Open'}</span>
+      </div>`).join('') : `<div class="empty"><div class="glyph">☑</div><p>No jobs logged yet.</p></div>`);
+}
+function startJob(){
+  const type = document.getElementById('job-template').value;
+  const title = document.getElementById('job-title').value.trim();
+  const job = {id:uid(), type, title, created:Date.now(), items: TEMPLATES[type].map(t=>({text:t,done:false,note:''})), photos:[], location:null};
+  jobs.push(job); jobsSave(); activeJobId = job.id; jobsRender();
+}
+function renderJobDetail(){
+  const job = jobs.find(j=>j.id===activeJobId);
+  const body = document.getElementById('jobs-body');
+  body.innerHTML = `
+    <div class="breadcrumb"><b onclick="activeJobId=null;jobsRender()">Jobs</b><span class="sep">›</span><span>${job.title||'(untitled)'}</span></div>
+    <div class="card">
+      <h3>${job.title || 'Untitled job'} <span class="badge amber" style="text-transform:capitalize">${job.type}</span></h3>
+      <div id="job-checklist">${job.items.map((it,i)=>`
+        <div class="checklist-item ${it.done?'done':''}">
+          <input type="checkbox" ${it.done?'checked':''} onchange="toggleItem(${i})">
+          <label>${it.text}</label>
+        </div>`).join('')}</div>
+    </div>
+    <div class="card">
+      <h3>Photos</h3>
+      <div class="photo-grid">
+        ${job.photos.map((p,i)=>`<div class="photo-thumb"><img src="${p}"><button class="rm" onclick="rmPhoto(${i})">✕</button></div>`).join('')}
+        <label class="add-photo-btn">＋<input type="file" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(event)"></label>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Location</h3>
+      <p class="hint">${job.location ? `Tagged at ${job.location.lat.toFixed(5)}, ${job.location.lng.toFixed(5)}` : 'Not tagged.'}</p>
+      <button class="btn ghost sm" onclick="tagJobLocation()">${job.location?'Update':'Tag'} location</button>
+    </div>
+    <div class="row">
+      <button class="btn ghost" onclick="exportJob()">Export report</button>
+      <button class="btn danger" onclick="deleteJob()">Delete job</button>
+    </div>`;
+}
+function toggleItem(i){ const job=jobs.find(j=>j.id===activeJobId); job.items[i].done=!job.items[i].done; jobsSave(); renderJobDetail(); }
+function addPhoto(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const canvas = document.createElement('canvas');
+      const maxW = 900; const scale = Math.min(1, maxW/img.width);
+      canvas.width = img.width*scale; canvas.height = img.height*scale;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg',0.75);
+      const job = jobs.find(j=>j.id===activeJobId);
+      job.photos.push(dataUrl); jobsSave(); renderJobDetail();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function rmPhoto(i){ const job=jobs.find(j=>j.id===activeJobId); job.photos.splice(i,1); jobsSave(); renderJobDetail(); }
+function tagJobLocation(){
+  if(!navigator.geolocation){ toast('Geolocation not available'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const job = jobs.find(j=>j.id===activeJobId);
+    job.location = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+    jobsSave(); renderJobDetail(); toast('Location tagged');
+  }, ()=>toast('Could not get location'));
+}
+function deleteJob(){
+  if(!confirm('Delete this job? This cannot be undone.')) return;
+  jobs = jobs.filter(j=>j.id!==activeJobId); jobsSave(); activeJobId=null; jobsRender();
+}
+async function exportJob(){
+  const job = jobs.find(j=>j.id===activeJobId);
+  const lines = [
+    `LineToolkit Job Report`,
+    `${job.title || '(untitled)'} — ${job.type}`,
+    `Date: ${new Date(job.created).toLocaleString()}`,
+    job.location ? `Location: ${job.location.lat}, ${job.location.lng}` : '',
+    '', 'Checklist:',
+    ...job.items.map(it=>`  [${it.done?'x':' '}] ${it.text}`),
+    '', `Photos attached: ${job.photos.length}`
+  ].filter(Boolean).join('\n');
+  const blob = new Blob([lines],{type:'text/plain'});
+  const file = new File([blob], 'job-report.txt', {type:'text/plain'});
+  if(navigator.share && navigator.canShare?.({files:[file]})){
+    try{ await navigator.share({files:[file], title:'Job report'}); return; }catch(e){}
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `job-${job.id}.txt`; a.click();
+  toast('Report exported');
+}
+jobsRender();
+</script>
+</body>
+</html>
